@@ -45,6 +45,21 @@ namespace RouterClient
 
         private StreamReader reader;
 
+        private List<krotka> lista_krotek = new List<krotka>();
+
+        private krotka wyszukaj_krotke(string id_polaczenia)
+        {
+            foreach(krotka krot in lista_krotek)
+            {
+                if(krot.idPolaczenia.Equals(id_polaczenia))
+                {
+                    return krot;
+                }
+            }
+
+            return new krotka();
+        }
+
         public Form1()
         {
             InitializeComponent();
@@ -86,6 +101,16 @@ namespace RouterClient
             return localIP;
         }
 
+        private struct krotka
+        {
+            public string idPolaczenia;
+            public string odKogo;
+            public string etykietaPrzychodzaca;
+            public string portEtykieta;
+            public string etykietaWychodzaca;
+            public string nextHop;
+        }
+
         public void odczytaj(string returndata)
         {
             Console.WriteLine(returndata);
@@ -115,358 +140,10 @@ namespace RouterClient
                             }
                     break;
                 case "LinkConnectionRequest":
-                    CoDostalem.Invoke(new Action(delegate()
-                    {
-                        CoDostalem.AppendText(returndata + "\n\r");
-                    }));
-                    string idPolaczenia = otrzymaneDane[1];
-                    string odKogo = otrzymaneDane[2];
-                    string doKogo = otrzymaneDane[3];
-                    //switch (odKogo)
-                    //{
-                    //    case "W1":
-                    //    case "W2":
-                    //    case "W3":
-                    //    case "W4":
-                    //    case "W5":
-                    //    case "W6":
-                    //    case "W7":
-                    //    case "W8":
-                    //    case "W9":
-                    //    case "W10":
-                    //        odKogo = odKogo + "@domena0";
-                    //        break;
-                    //    case "W11":
-                    //    case "W12":
-                    //    case "W13":
-                    //    case "W14":
-                    //        odKogo = odKogo + "@domena1";
-                    //        break;
-                    //    case "JAREK":
-                    //    case "MICHAL":
-                    //        odKogo = odKogo + "@domena1";
-                    //        break;
-                    //    case "WOJTEK":
-                    //        odKogo = odKogo + "@domena0";
-                    //        break;
-                    //    default:
-                    //        break;
-                    //}
-                    
-
-                    //CC daje bez domeny, a dalej logika jej wymaga
-                    switch (doKogo)
-                    {
-                        case "W1":
-                        case "W2":
-                        case "W3":
-                        case "W4":
-                        case "W5":
-                        case "W6":
-                        case "W7":
-                        case "W8":
-                        case "W9":
-                        case "W10":
-                            doKogo = doKogo + "@domena0";
-                            break;
-                        case "W11":
-                        case "W12":
-                        case "W13":
-                        case "W14":
-                            doKogo = doKogo + "@domena1";
-                            break;
-                        case "JAREK" :
-                        case "MICHAL" :
-                            doKogo = doKogo + "@domena1";
-                            break;
-                        case "WOJTEK" :
-                            doKogo = doKogo + "@domena0";
-                            break;
-                        default:
-                            break;
-                    }
-                    //rozroznienie dla tych skrajnych wezlow przy podsieci i wyjsciu z domeny
-                    switch (id)
-                    {
-                        case "W3@domena0" :
-                            if(odKogo.Equals("dostanieszS")) {
-                                odKogo = "W7@domena0";
-                            }
-                            if (doKogo.Equals("wyprowadzS"))
-                            {
-                                doKogo = "W7@domena0";
-                            }
-                            break;
-                        case "W7@domena0" :
-                            if (odKogo.Equals("dostanieszS"))
-                            {
-                                odKogo = "W3@domena0";
-                            }
-                            if (doKogo.Equals("wyprowadzS"))
-                            {
-                                doKogo = "W3@domena0";
-                            }
-                            break;
-                        case "W10@domena0" :
-                            if (odKogo.Equals("dostanieszS"))
-                            {
-                                odKogo = "W6@domena0";
-                            }
-                            if (doKogo.Equals("wyprowadzS"))
-                            {
-                                doKogo = "W6@domena0";
-                            }
-                            break;
-                        case "W6@domena0" :
-                            if (odKogo.Equals("dostanieszS"))
-                            {
-                                odKogo = "W10@domena0";
-                            }
-                            if (doKogo.Equals("wyprowadzS"))
-                            {
-                                doKogo = "W10@domena0";
-                            }
-                            if (odKogo.Equals("dostanieszD"))
-                            {
-                                odKogo = "W11@domena1";
-                            }
-                            if (doKogo.Equals("wyprowadzD"))
-                            {
-                                doKogo = "W11@domena1";
-                            }
-                            break;
-                        case "W11@domena1" :
-                            if (odKogo.Equals("dostanieszD"))
-                            {
-                                odKogo = "W6@domena0";
-                            }
-                            if (doKogo.Equals("wyprowadzD"))
-                            {
-                                doKogo = "W6@domena0";
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                    string etykietaDoKogo = "";
-                    lock (clientAddresses)
-                    {
-                        if (client.wykorzystaneEtykiety.ContainsKey(idPolaczenia +odKogo))
-                        {
-                            //sprawdzenie czy istnieje etykieta dla tego polaczenia, jesli tak to jej uzywa, jesli nie to negocjuje nowa
-                            etykietaDoKogo = client.wykorzystaneEtykiety[idPolaczenia +odKogo];
-                        }
-                        else
-                        {
-                            etykietaDoKogo = client.negotiation(idPolaczenia, odKogo, doKogo);
-                        }
-                        string portOdKogo = client.dajPortSasiada(odKogo);
-                        for (int i = 0; i < clientAddresses.Length; i++)
-                        {
-                            if (clientAddresses[i] != null)
-                            {
-                                if (clientAddresses[i].Contains(idPolaczenia + "idPolaczenia" + odKogo))
-                                {
-                                    //wypelnienie tabeli dla danych polaczenia, niektore wartosci defaultowe czekajace na wiecej danych
-                                    if (clientAddresses[i + 1] == null)
-                                    {
-                                        clientAddresses[i + 1] = portOdKogo + "etykietaOd" + odKogo;
-                                    }
-
-                                    clientAddresses[i + 2] = etykietaDoKogo;
-                                    clientAddresses[i + 3] = doKogo;
-                                    if (clientAddresses[i + 4] != null)
-                                    {
-                                        //wypelnienie obslugujace wysylanie w druga strone
-                                        if (clientAddresses[i + 4].Contains(idPolaczenia + "idPolaczenia" + doKogo))
-                                        {
-                                            if (clientAddresses[i + 5] == null)
-                                            {
-                                                clientAddresses[i + 5] = client.dajPortSasiada(doKogo) + "etykietaOd" + doKogo;
-                                            }
-                                            if (client.wykorzystaneEtykiety.ContainsKey(idPolaczenia + doKogo))
-                                            {
-                                                etykietaDoKogo = client.wykorzystaneEtykiety[idPolaczenia + doKogo];
-                                            }
-                                            else
-                                            {
-                                                etykietaDoKogo = client.negotiation(idPolaczenia, doKogo, odKogo);
-                                            }
-                                            clientAddresses[i + 6] = etykietaDoKogo;
-                                            clientAddresses[i + 7] = odKogo;
-                                        }
-                                    }
-                                    break;
-                                }
-                                else
-                                {
-                                    if (clientAddresses[i].Contains(idPolaczenia + "idPolaczenia" + doKogo))
-                                    {
-                                        if (clientAddresses[i + 1] == null)
-                                        {
-                                            clientAddresses[i + 1] = client.dajPortSasiada(doKogo) + "etykietaOd" + doKogo;
-                                        }
-                                        if (client.wykorzystaneEtykiety.ContainsKey(idPolaczenia + doKogo))
-                                        {
-                                            etykietaDoKogo = client.wykorzystaneEtykiety[idPolaczenia + doKogo];
-                                        }
-                                        else
-                                        {
-                                            etykietaDoKogo = client.negotiation(idPolaczenia, doKogo, odKogo);
-                                        }
-                                        clientAddresses[i + 2] = etykietaDoKogo;
-                                        clientAddresses[i + 3] = odKogo;
-                                        if (clientAddresses[i + 4] != null)
-                                        {
-                                            if (clientAddresses[i + 4].Contains(idPolaczenia + "idPolaczenia" + odKogo))
-                                            {
-                                                if (clientAddresses[i + 5] == null)
-                                                {
-                                                    clientAddresses[i + 5] = portOdKogo + "etykietaOd" + odKogo;
-                                                }
-                                                clientAddresses[i + 6] = etykietaDoKogo;
-                                                clientAddresses[i + 7] = doKogo;
-                                            }
-                                        }
-                                        break;
-                                    }
-
-                                }
-                            }
-                            else
-                            {
-                                //wypelnienie w jedna strone
-                                clientAddresses[i] = idPolaczenia + "idPolaczenia" + odKogo;
-                                clientAddresses[i + 1] = portOdKogo + "etykietaOd" + odKogo;
-                                clientAddresses[i + 2] = etykietaDoKogo;
-                                clientAddresses[i + 3] = doKogo;
-                                //dolozenie w druga
-                                clientAddresses[i + 4] = idPolaczenia + "idPolaczenia" + doKogo.Split('@')[0];
-                                clientAddresses[i + 5] = client.dajPortSasiada(doKogo) + "etykietaOd" + doKogo;
-                                if (client.wykorzystaneEtykiety.ContainsKey(idPolaczenia + doKogo.Split('@')[0]))
-                                {
-                                    etykietaDoKogo = client.wykorzystaneEtykiety[idPolaczenia + doKogo.Split('@')[0]];
-                                }
-                                else
-                                {
-                                    etykietaDoKogo = client.negotiation(idPolaczenia, doKogo.Split('@')[0], odKogo);
-                                }
-                                clientAddresses[i + 6] = etykietaDoKogo;
-                                clientAddresses[i + 7] = odKogo;
-                                break;
-                            }
-                        }
-                        client.zapelnijTablice(clientAddresses);
-                        Console.WriteLine("zawartosc client addresses po connectionRequest");
-                        for (int i = 0; i < clientAddresses.Length; i++)
-                        {
-                            if (clientAddresses[i] != null)
-                            {
-
-                                Console.WriteLine(i + ":" + clientAddresses[i]);
-                            }
-                        }
-                    }
-                        break;
+                    LinkConnectionRequest(otrzymaneDane);
+                    break;
                 case "Negotiation":
-                    CoDostalem.Invoke(new Action(delegate()
-                    {
-                        CoDostalem.AppendText(returndata + "\n\r");
-                    }));
-                    string idPolaczeniaNegotiation = otrzymaneDane[1];
-                    string odKogoNegotiation = otrzymaneDane[2];
-                    string odKogoNegotiationTemp = odKogoNegotiation;
-                    odKogoNegotiation = odKogoNegotiation.Split('@')[0];
-                    string etykietaOdKogo = otrzymaneDane[3];
-                    string portPrzychodzacego = client.dajPortSasiada(odKogoNegotiationTemp);
-                    string etykietaDoKogoNegotiation = "";
-                    if (client.wykorzystaneEtykiety.ContainsKey(idPolaczeniaNegotiation + odKogoNegotiation))
-                    {
-                        etykietaDoKogoNegotiation = client.wykorzystaneEtykiety[idPolaczeniaNegotiation + odKogoNegotiation];
-                    }
-                    
-                    //#Negotiation#" + idPolaczenia + "#" + mojeID + "#" + etykieta.ToString();
-                    lock (clientAddresses)
-                    {
-                        for (int i = 0; i < clientAddresses.Length; i++)
-                        {
-                            if (clientAddresses[i] != null)
-                            {
-                                if (clientAddresses[i].Contains(idPolaczeniaNegotiation + "idPolaczenia" + odKogoNegotiation))
-                                {
-                                    if (clientAddresses[i + 1].Contains(portPrzychodzacego))
-                                    {
-                                        if (clientAddresses[i + 1].Contains(portPrzychodzacego + "etykietaOd" + odKogoNegotiation))
-                                        {
-                                            clientAddresses[i + 1] = portPrzychodzacego + "/" +etykietaOdKogo;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                clientAddresses[i] = idPolaczeniaNegotiation + "idPolaczenia" + odKogoNegotiation;
-                                clientAddresses[i + 1] = portPrzychodzacego + "/" + etykietaOdKogo;
-                                clientAddresses[i + 2] = idPolaczeniaNegotiation + "etykietaDo";
-                                clientAddresses[i + 3] = idPolaczeniaNegotiation + "NextHop";
-                                break;
-                            }
-
-                        //        if (clientAddresses[i].Equals(portPrzychodzacego))
-                        //        {
-                        //            clientAddresses[i + 1] = otrzymaneDane[3];
-                        //            if (clientAddresses[i + 2] != null)
-                        //            {
-                        //                break;
-                        //            }
-                        //            else
-                        //            {
-                        //                clientAddresses[i + 2] = otrzymaneDane[1] + "NextHop";
-                        //                clientAddresses[i + 3] = otrzymaneDane[1] + "etykieta";
-                        //                clientAddresses[i + 4] = otrzymaneDane[1] + "portWDrugaStrone";
-                        //                clientAddresses[i + 5] = otrzymaneDane[1] + "etykietaWDrugaStrone";
-                        //                clientAddresses[i + 6] = otrzymaneDane[2];
-                        //                clientAddresses[i + 7] = otrzymaneDane[4];
-                        //                break;
-                        //            }
-                        //        }
-                        //        else
-                        //        {
-                        //            continue;
-                        //        }
-                        //    }
-                        //    else
-                        //    {
-                        //        clientAddresses[i] = portPrzychodzacego;
-                        //        clientAddresses[i + 1] = otrzymaneDane[3];
-                        //        if (clientAddresses[i + 2] != null)
-                        //        {
-                        //            break;
-                        //        }
-                        //        else
-                        //        {
-                        //            clientAddresses[i + 2] = otrzymaneDane[1] + "NextHop";
-                        //            clientAddresses[i + 3] = otrzymaneDane[1] + "etykieta";
-                        //            clientAddresses[i + 4] = otrzymaneDane[1] + "portWDrugaStrone";
-                        //            clientAddresses[i + 5] = otrzymaneDane[1] + "etykietaWDrugaStrone";
-                        //            clientAddresses[i + 6] = otrzymaneDane[2];
-                        //            clientAddresses[i + 7] = otrzymaneDane[4];
-                        //        }
-                        //        break;
-                        //    }
-                        }
-                        client.zapelnijTablice(clientAddresses);
-                        Console.WriteLine("zawartosc client addresses po negotiation");
-                        for (int i = 0; i < clientAddresses.Length; i++)
-                        {
-                            if (clientAddresses[i] != null)
-                            {
-
-                                Console.WriteLine(i + ":" + clientAddresses[i]);
-                            }
-                        }
-                    }
+                    Negotiation(otrzymaneDane);
                     break;
                 case "KeepAlive":
                     //CoDostalem.Invoke(new Action(delegate()
@@ -675,6 +352,87 @@ namespace RouterClient
             //                }
             //            }
                         //reader.Close();
+        }
+
+        private void Negotiation(string[] otrzymaneDane)
+        {
+            krotka otrzymanaKrotka = wyszukaj_krotke(otrzymaneDane[1]);
+            if (otrzymanaKrotka.idPolaczenia == null)
+            {
+                otrzymanaKrotka.idPolaczenia = otrzymaneDane[1] + otrzymaneDane[2];
+                otrzymanaKrotka.odKogo = otrzymaneDane[2];
+                otrzymanaKrotka.etykietaPrzychodzaca = otrzymaneDane[3];
+
+                lista_krotek.Add(otrzymanaKrotka);
+            }
+            else
+            {
+                otrzymanaKrotka.odKogo = otrzymaneDane[2];
+                otrzymanaKrotka.etykietaPrzychodzaca = otrzymaneDane[3];
+                otrzymanaKrotka.portEtykieta = otrzymanaKrotka.odKogo + otrzymanaKrotka.etykietaPrzychodzaca;
+                for (int i = 0; i < clientAddresses.Length; i += 3)
+                {
+                    if (clientAddresses[i] != null)
+                    {
+                        if (clientAddresses[i].Contains(otrzymanaKrotka.odKogo))
+                        {
+                            clientAddresses[i] = otrzymanaKrotka.portEtykieta;
+                            clientAddresses[i + 1] = otrzymanaKrotka.etykietaWychodzaca;
+                            clientAddresses[i + 2] = otrzymanaKrotka.nextHop;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        clientAddresses[i] = otrzymanaKrotka.portEtykieta;
+                        clientAddresses[i + 1] = otrzymanaKrotka.etykietaWychodzaca;
+                        clientAddresses[i + 2] = otrzymanaKrotka.nextHop;
+                        break;
+                    }
+                }
+                lista_krotek.Remove(otrzymanaKrotka);
+            }
+        }
+
+        private void LinkConnectionRequest(string[] otrzymaneDane)
+        {
+            krotka otrzymanaKrotka = wyszukaj_krotke(otrzymaneDane[1]);
+            if (otrzymanaKrotka.idPolaczenia == null)
+            {
+                otrzymanaKrotka.idPolaczenia = otrzymaneDane[1] + otrzymaneDane[2];
+                otrzymanaKrotka.odKogo = otrzymaneDane[2];
+                otrzymanaKrotka.etykietaWychodzaca = client.negotiation(otrzymaneDane[1], otrzymaneDane[2], otrzymaneDane[3]);
+                otrzymanaKrotka.nextHop = otrzymaneDane[3];
+                lista_krotek.Add(otrzymanaKrotka);
+            }
+            else
+            {
+                otrzymanaKrotka.odKogo = otrzymaneDane[2];
+                otrzymanaKrotka.etykietaWychodzaca = client.negotiation(otrzymaneDane[1], otrzymaneDane[2], otrzymaneDane[3]);
+                otrzymanaKrotka.nextHop = otrzymaneDane[3];
+                otrzymanaKrotka.portEtykieta = otrzymanaKrotka.odKogo + otrzymanaKrotka.etykietaPrzychodzaca;
+                for (int i = 0; i < clientAddresses.Length; i+=3)
+                {
+                    if (clientAddresses[i] != null)
+                    {
+                        if (clientAddresses[i].Contains(otrzymanaKrotka.odKogo))
+                        {
+                            clientAddresses[i] = otrzymanaKrotka.portEtykieta;
+                            clientAddresses[i + 1] = otrzymanaKrotka.etykietaWychodzaca;
+                            clientAddresses[i + 2] = otrzymanaKrotka.nextHop;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        clientAddresses[i] = otrzymanaKrotka.portEtykieta;
+                        clientAddresses[i + 1] = otrzymanaKrotka.etykietaWychodzaca;
+                        clientAddresses[i + 2] = otrzymanaKrotka.nextHop;
+                        break;
+                    }
+                }
+                lista_krotek.Remove(otrzymanaKrotka);
+            }
         }
 
 
