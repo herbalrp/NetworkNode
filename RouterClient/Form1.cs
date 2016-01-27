@@ -46,6 +46,7 @@ namespace RouterClient
         private StreamReader reader;
 
         private List<krotka> lista_krotek = new List<krotka>();
+        private Dictionary<string, string> slownik_domen = new Dictionary<string, string>();
 
         private krotka wyszukaj_krotke(string id_polaczenia)
         {
@@ -71,7 +72,18 @@ namespace RouterClient
             {
                 Console.WriteLine("Nie udalo sie polaczyc z kablami");
             }
-            
+
+            wczytaj_plik(@"conf.txt");
+        }
+
+        private void wczytaj_plik(string p)
+        {
+            string[] lines = System.IO.File.ReadAllLines(p);
+            foreach(string s in lines)
+            {
+                string[] split = s.Split(new Char[]{'#'});
+                slownik_domen.Add(split[0], split[1]);
+            }
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -356,20 +368,19 @@ namespace RouterClient
 
         private void Negotiation(string[] otrzymaneDane)
         {
-            krotka otrzymanaKrotka = wyszukaj_krotke(otrzymaneDane[1]);
+            krotka otrzymanaKrotka = wyszukaj_krotke(otrzymaneDane[1] + otrzymaneDane[2]);
             if (otrzymanaKrotka.idPolaczenia == null)
             {
                 otrzymanaKrotka.idPolaczenia = otrzymaneDane[1] + otrzymaneDane[2];
-                otrzymanaKrotka.odKogo = otrzymaneDane[2];
+                otrzymanaKrotka.odKogo = client.dajPortSasiada(otrzymaneDane[2]);
                 otrzymanaKrotka.etykietaPrzychodzaca = otrzymaneDane[3];
 
                 lista_krotek.Add(otrzymanaKrotka);
             }
             else
             {
-                otrzymanaKrotka.odKogo = otrzymaneDane[2];
                 otrzymanaKrotka.etykietaPrzychodzaca = otrzymaneDane[3];
-                otrzymanaKrotka.portEtykieta = otrzymanaKrotka.odKogo + otrzymanaKrotka.etykietaPrzychodzaca;
+                otrzymanaKrotka.portEtykieta = otrzymanaKrotka.odKogo + "/"  +otrzymanaKrotka.etykietaPrzychodzaca;
                 for (int i = 0; i < clientAddresses.Length; i += 3)
                 {
                     if (clientAddresses[i] != null)
@@ -390,27 +401,35 @@ namespace RouterClient
                         break;
                     }
                 }
+                client.zapelnijTablice(clientAddresses);
+
                 lista_krotek.Remove(otrzymanaKrotka);
             }
         }
 
         private void LinkConnectionRequest(string[] otrzymaneDane)
         {
-            krotka otrzymanaKrotka = wyszukaj_krotke(otrzymaneDane[1]);
+            string x;
+            slownik_domen.TryGetValue(otrzymaneDane[2], out x);
+            otrzymaneDane[2] = x;
+            string y;
+            slownik_domen.TryGetValue(otrzymaneDane[3], out y);
+            otrzymaneDane[3] = y;
+            krotka otrzymanaKrotka = wyszukaj_krotke(otrzymaneDane[1] + otrzymaneDane[2]);
             if (otrzymanaKrotka.idPolaczenia == null)
             {
                 otrzymanaKrotka.idPolaczenia = otrzymaneDane[1] + otrzymaneDane[2];
-                otrzymanaKrotka.odKogo = otrzymaneDane[2];
+                otrzymanaKrotka.odKogo = client.dajPortSasiada(otrzymaneDane[2]);
                 otrzymanaKrotka.etykietaWychodzaca = client.negotiation(otrzymaneDane[1], otrzymaneDane[2], otrzymaneDane[3]);
                 otrzymanaKrotka.nextHop = otrzymaneDane[3];
                 lista_krotek.Add(otrzymanaKrotka);
             }
             else
             {
-                otrzymanaKrotka.odKogo = otrzymaneDane[2];
+                //otrzymanaKrotka.odKogo = client.dajPortSasiada(otrzymaneDane[2]);
                 otrzymanaKrotka.etykietaWychodzaca = client.negotiation(otrzymaneDane[1], otrzymaneDane[2], otrzymaneDane[3]);
                 otrzymanaKrotka.nextHop = otrzymaneDane[3];
-                otrzymanaKrotka.portEtykieta = otrzymanaKrotka.odKogo + otrzymanaKrotka.etykietaPrzychodzaca;
+                otrzymanaKrotka.portEtykieta = otrzymanaKrotka.odKogo + "/" +otrzymanaKrotka.etykietaPrzychodzaca;
                 for (int i = 0; i < clientAddresses.Length; i+=3)
                 {
                     if (clientAddresses[i] != null)
@@ -431,6 +450,8 @@ namespace RouterClient
                         break;
                     }
                 }
+                client.zapelnijTablice(clientAddresses);
+
                 lista_krotek.Remove(otrzymanaKrotka);
             }
         }
