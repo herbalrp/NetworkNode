@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Router IDWezla ="W11@domena1" IPKabli ="127.0.0.1" PortKabli ="6666" PortManagera ="3000" idManagera="m1" idRC="RC-1">
+  <Sasiad>
+    <id>W6</id>
+    <portOut>5014</portOut>
+  </Sasiad>
+  <Sasiad>
+    <id>W13</id>
+    <portOut>5017</portOut>
+  </Sasiad>
+  <Sasiad>
+    <id>W12</id>
+    <portOut>5016</portOut>
+  </Sasiad>
+  <Sasiad>
+    <id>jarek</id>
+    <portOut>5015</portOut>
+  </Sasiad>
+</Router>
