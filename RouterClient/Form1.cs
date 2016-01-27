@@ -409,26 +409,97 @@ namespace RouterClient
 
         private void LinkConnectionRequest(string[] otrzymaneDane)
         {
+            string odKogo = otrzymaneDane[2];
+            string doKogo = otrzymaneDane[3];
+            switch (id)
+            {
+                case "W3@domena0":
+                    if (odKogo.Equals("dostanieszS"))
+                    {
+                        odKogo = "W7@domena0";
+                    }
+                    if (doKogo.Equals("wyprowadzS"))
+                    {
+                        doKogo = "W7@domena0";
+                    }
+                    break;
+                case "W7@domena0":
+                    if (odKogo.Equals("dostanieszS"))
+                    {
+                        odKogo = "W3@domena0";
+                    }
+                    if (doKogo.Equals("wyprowadzS"))
+                    {
+                        doKogo = "W3@domena0";
+                    }
+                    break;
+                case "W10@domena0":
+                    if (odKogo.Equals("dostanieszS"))
+                    {
+                        odKogo = "W6@domena0";
+                    }
+                    if (doKogo.Equals("wyprowadzS"))
+                    {
+                        doKogo = "W6@domena0";
+                    }
+                    break;
+                case "W6@domena0":
+                    if (odKogo.Equals("dostanieszS"))
+                    {
+                        odKogo = "W10@domena0";
+                    }
+                    if (doKogo.Equals("wyprowadzS"))
+                    {
+                        doKogo = "W10@domena0";
+                    }
+                    if (odKogo.Equals("dostanieszD"))
+                    {
+                        odKogo = "W11@domena1";
+                    }
+                    if (doKogo.Equals("wyprowadzD"))
+                    {
+                        doKogo = "W11@domena1";
+                    }
+                    break;
+                case "W11@domena1":
+                    if (odKogo.Equals("dostanieszD"))
+                    {
+                        odKogo = "W6@domena0";
+                    }
+                    if (doKogo.Equals("wyprowadzD"))
+                    {
+                        doKogo = "W6@domena0";
+                    }
+                    break;
+                default:
+                    break;
+            }
             string x;
-            slownik_domen.TryGetValue(otrzymaneDane[2], out x);
-            otrzymaneDane[2] = x;
+            slownik_domen.TryGetValue(odKogo, out x);
+            if (x != null)
+            {
+                odKogo = x;
+            }
             string y;
-            slownik_domen.TryGetValue(otrzymaneDane[3], out y);
-            otrzymaneDane[3] = y;
-            krotka otrzymanaKrotka = wyszukaj_krotke(otrzymaneDane[1] + otrzymaneDane[2]);
+            slownik_domen.TryGetValue(doKogo, out y);
+            if (y != null)
+            {
+                doKogo = y;
+            }
+            krotka otrzymanaKrotka = wyszukaj_krotke(otrzymaneDane[1] + odKogo);
             if (otrzymanaKrotka.idPolaczenia == null)
             {
-                otrzymanaKrotka.idPolaczenia = otrzymaneDane[1] + otrzymaneDane[2];
-                otrzymanaKrotka.odKogo = client.dajPortSasiada(otrzymaneDane[2]);
-                otrzymanaKrotka.etykietaWychodzaca = client.negotiation(otrzymaneDane[1], otrzymaneDane[2], otrzymaneDane[3]);
-                otrzymanaKrotka.nextHop = otrzymaneDane[3];
+                otrzymanaKrotka.idPolaczenia = otrzymaneDane[1] + odKogo;
+                otrzymanaKrotka.odKogo = client.dajPortSasiada(odKogo);
+                otrzymanaKrotka.etykietaWychodzaca = client.negotiation(otrzymaneDane[1], odKogo, doKogo);
+                otrzymanaKrotka.nextHop = doKogo;
                 lista_krotek.Add(otrzymanaKrotka);
             }
             else
             {
                 //otrzymanaKrotka.odKogo = client.dajPortSasiada(otrzymaneDane[2]);
-                otrzymanaKrotka.etykietaWychodzaca = client.negotiation(otrzymaneDane[1], otrzymaneDane[2], otrzymaneDane[3]);
-                otrzymanaKrotka.nextHop = otrzymaneDane[3];
+                otrzymanaKrotka.etykietaWychodzaca = client.negotiation(otrzymaneDane[1], odKogo, doKogo);
+                otrzymanaKrotka.nextHop = doKogo;
                 otrzymanaKrotka.portEtykieta = otrzymanaKrotka.odKogo + "/" +otrzymanaKrotka.etykietaPrzychodzaca;
                 for (int i = 0; i < clientAddresses.Length; i+=3)
                 {
