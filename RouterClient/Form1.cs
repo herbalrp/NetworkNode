@@ -205,7 +205,7 @@ namespace RouterClient
                                     int ttl = int.Parse(wszystkieEtykiety[1]);
                                     if (ttl != 0)
                                     {
-                                        if (clientAddresses[i + 2].Equals("POP"))
+                                        if (clientAddresses[i + 1].Equals("POP"))
                                         {
 
                                             string[] wszystkieEtykietyTTL_tmp = new string[wszystkieEtykietyTTL.Length - 1];
