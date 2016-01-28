@@ -138,14 +138,22 @@ namespace RouterClient
             Console.WriteLine(otrzymaneDane.ToString());
             switch (otrzymaneDane[0])
             {
-                case "TABLICA":
+                case "3000":
                             if (otrzymaneDane[0].Equals(portManagera))
                             {
+                                //dodaj id polaczenia
                                 for (int i = 2; i < otrzymaneDane.Length; i++)
                                 {
                                     if (!otrzymaneDane[i].Contains("KONIEC"))
                                     {
-                                        clientAddresses[i - 2] = otrzymaneDane[i];
+                                        //clientAddresses[i - 2] = otrzymaneDane[i];
+                                        int j = wyszukaj_indeks(clientAddresses);
+                                        clientAddresses[j] = otrzymaneDane[i];
+                                        string nextHop;
+                                        slownik_domen.TryGetValue(otrzymaneDane[i+1], out nextHop);
+                                        clientAddresses[j + 2] = nextHop;
+                                        clientAddresses[j + 1] = otrzymaneDane[i+2];
+                                        i = i + 2;
                                     }
                                 }
                                 client.zapelnijTablice(clientAddresses);
@@ -527,6 +535,18 @@ namespace RouterClient
             }
         }
 
+        private int wyszukaj_indeks(string[] clientAddresses)
+        {
+            for (int i = 0; i < clientAddresses.Length; i++)
+            {
+                if (clientAddresses[i] == null)
+                {
+                    return i;
+                }
+            }
+
+            return 10000;
+        }
 
         public void nasluchuj()
         {
