@@ -430,7 +430,23 @@ namespace RouterClient
                         break;
                     }
                 }
+                string zawartoscTablic = "";
                 client.zapelnijTablice(clientAddresses);
+                for (int i = 0; i < clientAddresses.Length; i++)
+                {
+                    if (clientAddresses[i] != null)
+                    {
+                        zawartoscTablic = zawartoscTablic + i + ":" + clientAddresses[i] + "\n";
+                        Console.WriteLine(i + ":" + clientAddresses[i]);
+                    }
+                }
+                zawartoscCA.Invoke(new Action(delegate()
+                {
+                    zawartoscCA.Clear();
+                    zawartoscCA.AppendText(zawartoscTablic);
+                }));
+
+                //client.zapelnijTablice(clientAddresses);
                 usuwanie(otrzymanaKrotka);
                 //lista_krotek.Remove(otrzymanaKrotka);
             }
@@ -557,7 +573,22 @@ namespace RouterClient
                         break;
                     }
                 }
+                string zawartoscTablic = "";
                 client.zapelnijTablice(clientAddresses);
+                for (int i = 0; i < clientAddresses.Length; i++)
+                {
+                    if (clientAddresses[i] != null)
+                    {
+                        zawartoscTablic = zawartoscTablic + i + ":" + clientAddresses[i] + "\n";
+                        Console.WriteLine(i + ":" + clientAddresses[i]);
+                    }
+                }
+                zawartoscCA.Invoke(new Action(delegate()
+                {
+                    zawartoscCA.Clear();
+                    zawartoscCA.AppendText(zawartoscTablic);
+                }));
+
                 usuwanie(otrzymanaKrotka);
                 //lista_krotek.Remove(otrzymanaKrotka);
             }
