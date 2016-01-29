@@ -48,6 +48,9 @@ namespace RouterClient
         private List<krotka> lista_krotek = new List<krotka>();
         private Dictionary<string, string> slownik_domen = new Dictionary<string, string>();
 
+        public int numerPolaczeniaMenadzera = 3000;
+
+
         private krotka wyszukaj_krotke(string id_polaczenia)
         {
             foreach(krotka krot in lista_krotek)
@@ -123,6 +126,18 @@ namespace RouterClient
             public string nextHop;
         }
 
+        private void usuwanie(krotka kr)
+        {
+            for (int i = 0; i < lista_krotek.Count; i++)
+            {
+                if (lista_krotek[i].idPolaczenia.Equals(kr.idPolaczenia))
+                {
+                    lista_krotek.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+
         public void odczytaj(string returndata)
         {
             Console.WriteLine(returndata);
@@ -148,16 +163,18 @@ namespace RouterClient
                                     {
                                         //clientAddresses[i - 2] = otrzymaneDane[i];
                                         int j = wyszukaj_indeks(clientAddresses);
-                                        clientAddresses[j] = otrzymaneDane[i];
+                                        clientAddresses[j] = numerPolaczeniaMenadzera.ToString();
+                                        clientAddresses[j + 1] = otrzymaneDane[i];
                                         string nextHop;
                                         slownik_domen.TryGetValue(otrzymaneDane[i+1], out nextHop);
-                                        clientAddresses[j + 2] = nextHop;
-                                        clientAddresses[j + 1] = otrzymaneDane[i+2];
+                                        clientAddresses[j + 3] = nextHop;
+                                        clientAddresses[j + 2] = otrzymaneDane[i+2];
                                         i = i + 2;
                                     }
                                 }
                                 client.zapelnijTablice(clientAddresses);
                             }
+                                numerPolaczeniaMenadzera++;
                     break;
                 case "LinkConnectionRequest":
                     LinkConnectionRequest(otrzymaneDane);
@@ -199,6 +216,10 @@ namespace RouterClient
                             string x = otrzymaneDane[0] + "/" + wszystkieEtykiety[0];
                             for (int i = 0; i < clientAddresses.Length; i++)
                             {
+                                if (clientAddresses[i] == null)
+                                {
+                                    continue;
+                                }
                                 if (clientAddresses[i].Contains(x))
                                 {
                                     
@@ -225,7 +246,6 @@ namespace RouterClient
                                             
                                             string nextHop = clientAddresses[i + 2];
                                             
-                                            string dopisanie = "";
                                             //dopisanie = clientAddresses[i + 2] + "/" + ttl;
                                            // string[] dopisanie_tmp = clientAddresses[i + 2].Split('&');
                                            //dopisanie = dopisanie_tmp[0] + "/" + ttl;
@@ -389,34 +409,41 @@ namespace RouterClient
             {
                 otrzymanaKrotka.etykietaPrzychodzaca = otrzymaneDane[3];
                 otrzymanaKrotka.portEtykieta = otrzymanaKrotka.odKogo + "/"  +otrzymanaKrotka.etykietaPrzychodzaca;
-                for (int i = 0; i < clientAddresses.Length; i += 3)
+                for (int i = 0; i < clientAddresses.Length; i += 4)
                 {
                     if (clientAddresses[i] != null)
                     {
-                        if (clientAddresses[i].Contains(otrzymanaKrotka.odKogo))
+                        if (clientAddresses[i].Contains(otrzymanaKrotka.idPolaczenia))
                         {
-                            clientAddresses[i] = otrzymanaKrotka.portEtykieta;
-                            clientAddresses[i + 1] = otrzymanaKrotka.etykietaWychodzaca;
-                            clientAddresses[i + 2] = otrzymanaKrotka.nextHop;
+                            clientAddresses[i + 1] = otrzymanaKrotka.portEtykieta;
+                            clientAddresses[i + 2] = otrzymanaKrotka.etykietaWychodzaca;
+                            clientAddresses[i + 3] = otrzymanaKrotka.nextHop;
                             break;
                         }
                     }
                     else
                     {
-                        clientAddresses[i] = otrzymanaKrotka.portEtykieta;
-                        clientAddresses[i + 1] = otrzymanaKrotka.etykietaWychodzaca;
-                        clientAddresses[i + 2] = otrzymanaKrotka.nextHop;
+                        clientAddresses[i] = otrzymanaKrotka.idPolaczenia;
+                        clientAddresses[i + 1] = otrzymanaKrotka.portEtykieta;
+                        clientAddresses[i + 2] = otrzymanaKrotka.etykietaWychodzaca;
+                        clientAddresses[i + 3] = otrzymanaKrotka.nextHop;
                         break;
                     }
                 }
                 client.zapelnijTablice(clientAddresses);
-
-                lista_krotek.Remove(otrzymanaKrotka);
+                usuwanie(otrzymanaKrotka);
+                //lista_krotek.Remove(otrzymanaKrotka);
             }
         }
 
         private void LinkConnectionRequest(string[] otrzymaneDane)
         {
+            if (otrzymaneDane[otrzymaneDane.Length - 1].Equals("Release"))
+            {
+                string idDoUsuniecia = otrzymaneDane[1];
+                usunZTablicy(idDoUsuniecia);
+                return;
+            }
             string odKogo = otrzymaneDane[2];
             string doKogo = otrzymaneDane[3];
             switch (id)
@@ -509,29 +536,49 @@ namespace RouterClient
                 otrzymanaKrotka.etykietaWychodzaca = client.negotiation(otrzymaneDane[1], odKogo, doKogo);
                 otrzymanaKrotka.nextHop = doKogo;
                 otrzymanaKrotka.portEtykieta = otrzymanaKrotka.odKogo + "/" +otrzymanaKrotka.etykietaPrzychodzaca;
-                for (int i = 0; i < clientAddresses.Length; i+=3)
+                for (int i = 0; i < clientAddresses.Length; i+=4)
                 {
                     if (clientAddresses[i] != null)
                     {
-                        if (clientAddresses[i].Contains(otrzymanaKrotka.odKogo))
+                        if (clientAddresses[i].Contains(otrzymanaKrotka.idPolaczenia))
                         {
-                            clientAddresses[i] = otrzymanaKrotka.portEtykieta;
-                            clientAddresses[i + 1] = otrzymanaKrotka.etykietaWychodzaca;
-                            clientAddresses[i + 2] = otrzymanaKrotka.nextHop;
+                            clientAddresses[i + 1] = otrzymanaKrotka.portEtykieta;
+                            clientAddresses[i + 2] = otrzymanaKrotka.etykietaWychodzaca;
+                            clientAddresses[i + 3] = otrzymanaKrotka.nextHop;
                             break;
                         }
                     }
                     else
                     {
-                        clientAddresses[i] = otrzymanaKrotka.portEtykieta;
-                        clientAddresses[i + 1] = otrzymanaKrotka.etykietaWychodzaca;
-                        clientAddresses[i + 2] = otrzymanaKrotka.nextHop;
+                        clientAddresses[i] = otrzymanaKrotka.idPolaczenia;
+                        clientAddresses[i + 1] = otrzymanaKrotka.portEtykieta;
+                        clientAddresses[i + 2] = otrzymanaKrotka.etykietaWychodzaca;
+                        clientAddresses[i + 3] = otrzymanaKrotka.nextHop;
                         break;
                     }
                 }
                 client.zapelnijTablice(clientAddresses);
+                usuwanie(otrzymanaKrotka);
+                //lista_krotek.Remove(otrzymanaKrotka);
+            }
+        }
 
-                lista_krotek.Remove(otrzymanaKrotka);
+        private void usunZTablicy(string idDoUsuniecia)
+        {
+            for (int i = 0; i < clientAddresses.Length; i++)
+            {
+                if (clientAddresses[i] == null)
+                {
+                    continue;
+                }
+                if(clientAddresses[i].Contains(idDoUsuniecia))
+                {
+                    clientAddresses[i] = null;
+                    clientAddresses[i+1] = null;
+                    clientAddresses[i+2] = null;
+                    clientAddresses[i+3] = null;
+                    break;
+                }
             }
         }
 

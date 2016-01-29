@@ -206,7 +206,15 @@ namespace RouterClient
             {
                 if (!wykorzystaneEtykiety.ContainsValue(etykietaOdeMnie.ToString()))
                 {
-                    wykorzystaneEtykiety.Add(idPolaczenia + odKogo, etykietaOdeMnie.ToString());
+                    if (wykorzystaneEtykiety.ContainsKey(idPolaczenia + odKogo))
+                    {
+                        wykorzystaneEtykiety[idPolaczenia + odKogo] = etykietaOdeMnie.ToString();
+                    }
+                    else
+                    {
+                        wykorzystaneEtykiety.Add(idPolaczenia + odKogo, etykietaOdeMnie.ToString());
+                    }
+                    
                     break;
                 }
                 else
